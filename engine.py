@@ -1,5 +1,7 @@
-# engine.py
 import sys
+import json
+import os
+import urllib.request
 
 # Constants
 EMPTY = 0
@@ -90,5 +92,34 @@ def negamax(board, depth, alpha, beta):
         if alpha >= beta: break
     return max_eval
 
-def choose_move(board, legal_moves, node_budget):
-    return max(legal_moves, key=lambda move: -negamax(board, 2, -1000000, 1000000))
+def uci_to_move(uci):
+    fr = (ord(uci[0]) - ord('a')) + (int(uci[1]) - 1) * 16
+    to = (ord(uci[2]) - ord('a')) + (int(uci[3]) - 1) * 16
+    return (fr, to)
+
+def move_to_uci(move):
+    fr, to = move
+    return f"{chr(ord('a') + (fr % 16))}{fr // 16 + 1}{chr(ord('a') + (to % 16))}{to // 16 + 1}"
+
+ENV_URL = os.environ.get("MAKEFUN_ENV_URL") or sys.exit("MAKEFUN_ENV_URL is not set")
+
+def post(path, body):
+    req = urllib.request.Request(
+        ENV_URL + path,
+        data=json.dumps(body).encode(),
+        headers={"content-type": "application/json"},
+    )
+    with urllib.request.urlopen(req) as res:
+        return json.load(res)
+
+board = Board()
+while True:
+    g = post("/game", {})
+    if g["status"] == "done":
+        break
+    while g["status"] == "your_move":
+        board.parse_fen(g["fen"])
+        # Simple search for now
+        legal_moves = [uci_to_move(m) for m in g["legal_moves"]]
+        best_move = max(legal_moves, key=lambda move: -negamax(board, 2, -1000000, 1000000))
+        g = post("/move", {"game": g["game"], "move": move_to_uci(best_move)})
