@@ -1,3 +1,11 @@
 kit
-*.tar.gz
 trials
+*.tar.gz
+gemini-run*.log
+gemini-instr*.md
+BUILD-STATE.md
+__pycache__/
+main_src.py
+main_compressed.py
+compress_main.py
+unpack.py
