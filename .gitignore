@@ -9,3 +9,10 @@ main_src.py
 main_compressed.py
 compress_main.py
 unpack.py
+*.log
+cand_src.py
+pack.py
+drive*.py
+dbg*.py
+sanity*.py
+instr-*.txt
